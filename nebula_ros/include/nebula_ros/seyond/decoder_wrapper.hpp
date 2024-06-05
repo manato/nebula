@@ -58,14 +58,14 @@ private:
   std::shared_ptr<const SeyondCalibrationConfiguration> calibration_cfg_ptr_{};
 
   std::shared_ptr<SeyondDriver> driver_ptr_{};
-  std::mutex mtx_driver_ptr_;
+  std::mutex mtx_driver_ptr_{};
 
   rclcpp::Publisher<nebula_msgs::msg::NebulaPackets>::SharedPtr packets_pub_{};
   nebula_msgs::msg::NebulaPackets::UniquePtr current_scan_msg_{};
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr nebula_points_pub_{};
 
-  std::shared_ptr<WatchdogTimer> cloud_watchdog_;
+  std::shared_ptr<WatchdogTimer> cloud_watchdog_{};
 };
 }  // namespace ros
 }  // namespace nebula

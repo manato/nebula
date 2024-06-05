@@ -19,13 +19,13 @@ struct SeyondSensorConfiguration : public LidarConfigurationBase
   uint16_t gnss_port{};
   double scan_phase{};
   double dual_return_distance_threshold{};
-  uint16_t rotation_speed;
-  uint16_t cloud_min_angle;
-  uint16_t cloud_max_angle;
-  PtpProfile ptp_profile;
-  uint8_t ptp_domain;
-  PtpTransportType ptp_transport_type;
-  PtpSwitchType ptp_switch_type;
+  uint16_t rotation_speed{};
+  uint16_t cloud_min_angle{};
+  uint16_t cloud_max_angle{};
+  PtpProfile ptp_profile{};
+  uint8_t ptp_domain{};
+  PtpTransportType ptp_transport_type{};
+  PtpSwitchType ptp_switch_type{};
 };
 /// @brief Convert SeyondSensorConfiguration to string (Overloading the << operator)
 /// @param os
@@ -80,6 +80,15 @@ struct SeyondCalibrationConfiguration : public SeyondCalibrationConfigurationBas
 inline ReturnMode ReturnModeFromStringSeyond(
   const std::string & return_mode, const SensorModel & sensor_model)
 {
+  switch (sensor_model) {
+    // TODO (hirabayashi): check which return mode is supported by each model
+    case SensorModel::SEYOND_FALCON_KINETIC:
+    case SensorModel::SEYOND_ROBIN_W:
+      break;
+    default:
+      break;
+  }
+
   return ReturnMode::UNKNOWN;
 }
 
@@ -89,6 +98,15 @@ inline ReturnMode ReturnModeFromStringSeyond(
 /// @return Corresponding ReturnMode
 inline ReturnMode ReturnModeFromIntSeyond(const int return_mode, const SensorModel & sensor_model)
 {
+  switch (sensor_model) {
+    // TODO (hirabayashi): check which return mode is supported by each model
+    case SensorModel::SEYOND_FALCON_KINETIC:
+    case SensorModel::SEYOND_ROBIN_W:
+      break;
+    default:
+      break;
+  }
+
   return ReturnMode::UNKNOWN;
 }
 
@@ -98,6 +116,14 @@ inline ReturnMode ReturnModeFromIntSeyond(const int return_mode, const SensorMod
 /// @return Corresponding return mode number for the hardware
 inline int IntFromReturnModeSeyond(const ReturnMode return_mode, const SensorModel & sensor_model)
 {
+  switch (sensor_model) {
+    // TODO (hirabayashi): check which return mode is supported by each model
+    case SensorModel::SEYOND_FALCON_KINETIC:
+    case SensorModel::SEYOND_ROBIN_W:
+      break;
+    default:
+      break;
+  }
 
   return -1;
 }

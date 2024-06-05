@@ -444,29 +444,29 @@ inline std::ostream & operator<<(std::ostream & os, nebula::drivers::SensorModel
 /// @brief Base struct for Sensor configuration
 struct SensorConfigurationBase
 {
-  SensorModel sensor_model;
-  std::string frame_id;
+  SensorModel sensor_model{};
+  std::string frame_id{};
 };
 
 /// @brief Base struct for Ethernet-based Sensor configuration
 struct EthernetSensorConfigurationBase : SensorConfigurationBase
 {
-  std::string host_ip;
-  std::string sensor_ip;
-  uint16_t data_port;
+  std::string host_ip{};
+  std::string sensor_ip{};
+  uint16_t data_port{};
 };
 
 /// @brief Base struct for Lidar configuration
 struct LidarConfigurationBase : EthernetSensorConfigurationBase
 {
-  ReturnMode return_mode;
-  uint16_t frequency_ms;
-  uint16_t packet_mtu_size;
-  CoordinateMode coordinate_mode;
-  double min_range;
-  double max_range;
-  bool remove_nans;  /// todo: consider changing to only_finite
-  std::vector<PointField> fields;
+  ReturnMode return_mode{ReturnMode::UNKNOWN};
+  uint16_t frequency_ms{0};
+  uint16_t packet_mtu_size{0};
+  CoordinateMode coordinate_mode{CoordinateMode::UNKNOWN};
+  double min_range{0};
+  double max_range{0};
+  bool remove_nans{false};  /// todo: consider changing to only_finite
+  std::vector<PointField> fields{};
   bool use_sensor_time{false};
 };
 
@@ -588,6 +588,7 @@ inline std::string SensorModelToString(const SensorModel & sensor_model)
       return "Bpearl_V4";
     case SensorModel::CONTINENTAL_ARS548:
       return "ARS548";
+    // Seyond
     case SensorModel::SEYOND_FALCON_KINETIC:
       return "Falcon";
     case SensorModel::SEYOND_ROBIN_W:

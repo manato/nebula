@@ -8,9 +8,10 @@ namespace ros
 
 SeyondHwInterfaceWrapper::SeyondHwInterfaceWrapper(
   rclcpp::Node * const parent_node, std::shared_ptr<const SeyondSensorConfiguration> & config)
-: hw_interface_(new SeyondHwInterface()),
+: hw_interface_(std::make_shared<SeyondHwInterface>()),
   logger_(parent_node->get_logger().get_child("HwInterface")),
-  status_(Status::NOT_INITIALIZED)
+  status_(Status::NOT_INITIALIZED),
+  setup_sensor_(false)
 {
   setup_sensor_ = parent_node->declare_parameter<bool>("setup_sensor", true, param_read_only());
   //bool retry_connect = parent_node->declare_parameter<bool>("retry_hw", true, param_read_only());
