@@ -26,6 +26,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <memory>
 
 namespace nebula
 {
@@ -71,11 +72,12 @@ private:
 
   bool launch_hw_;
 
-  std::optional<SeyondHwInterfaceWrapper> hw_interface_wrapper_;
-  std::optional<SeyondHwMonitorWrapper> hw_monitor_wrapper_;
-  std::optional<SeyondDecoderWrapper> decoder_wrapper_;
-
-  OnSetParametersCallbackHandle::SharedPtr parameter_event_cb_;
+  std::optional<SeyondHwInterfaceWrapper> hw_interface_wrapper_{};
+#if 0
+  std::optional<SeyondHwMonitorWrapper> hw_monitor_wrapper_{};
+  std::optional<SeyondDecoderWrapper> decoder_wrapper_{};
+#endif
+  OnSetParametersCallbackHandle::SharedPtr parameter_event_cb_{};
 };
 
 }  // namespace ros

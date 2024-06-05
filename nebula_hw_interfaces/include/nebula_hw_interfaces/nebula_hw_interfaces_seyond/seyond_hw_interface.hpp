@@ -16,6 +16,7 @@
 #include "nebula_common/seyond/seyond_common.hpp"
 #include "nebula_common/util/expected.hpp"
 #include "nebula_hw_interfaces/nebula_hw_interfaces_common/nebula_hw_interface_base.hpp"
+#include "nebula_hw_interfaces/nebula_hw_interfaces_seyond/seyond_cmd_sender_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -27,7 +28,6 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include <memory>
-#include <mutex>
 #include <vector>
 
 namespace nebula
@@ -39,22 +39,28 @@ class SeyondHwInterface
 {
 private:
   std::unique_ptr<::drivers::common::IoContext> cloud_io_context_;
-  std::shared_ptr<boost::asio::io_context> m_owned_ctx;
   std::unique_ptr<::drivers::udp_driver::UdpDriver> cloud_udp_driver_;
   std::shared_ptr<const SeyondSensorConfiguration> sensor_configuration_;
   std::function<void(std::vector<uint8_t> & buffer)>
     cloud_packet_callback_; /**This function pointer is called when the scan is complete*/
+  std::unique_ptr<SeyondCmdSenderBase> command_sender_;
 
-  int prev_phase_{};
-  int target_model_no;
+  std::shared_ptr<boost::asio::io_context> ctx_;
+  std::unique_ptr<::drivers::tcp_driver::HttpClientDriver> drv_;
+
+
+
+  // int prev_phase_{};
   std::shared_ptr<rclcpp::Logger> parent_node_logger_;
 
   /// @brief Printing the string to RCLCPP_INFO_STREAM
   /// @param info Target string
   void PrintInfo(std::string info);
+
   /// @brief Printing the string to RCLCPP_ERROR_STREAM
   /// @param error Target string
   void PrintError(std::string error);
+
   /// @brief Printing the string to RCLCPP_DEBUG_STREAM
   /// @param debug Target string
   void PrintDebug(std::string debug);
@@ -93,11 +99,11 @@ public:
   /// @param sensor_configuration SensorConfiguration for this interface
   /// @return Resulting status
   Status SetSensorConfiguration(
-    std::shared_ptr<const SensorConfigurationBase> sensor_configuration);
+    const std::shared_ptr<const SensorConfigurationBase>& sensor_configuration);
 
-  /// @brief Set target model number
-  /// @param model Model number
-  void SetTargetModel(int model);
+  // /// @brief Set target model number
+  // /// @param model Model number
+  // void SetTargetModel(nebula::drivers::SensorModel model);
 
   /// @brief Registering callback for NebulaPackets
   /// @param scan_callback Callback function
@@ -107,6 +113,9 @@ public:
   /// @brief Setting rclcpp::Logger
   /// @param node Logger
   void SetLogger(std::shared_ptr<rclcpp::Logger> logger);
+
+  /// @brief Display common information acquired from sensor
+  void DisplayCommonVersion();
 };
 }  // namespace drivers
 }  // namespace nebula

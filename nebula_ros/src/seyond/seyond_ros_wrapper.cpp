@@ -1,5 +1,7 @@
 #include "nebula_ros/seyond/seyond_ros_wrapper.hpp"
 
+#define DEV_HW_IF
+
 namespace nebula
 {
 namespace ros
@@ -7,11 +9,16 @@ namespace ros
 SeyondRosWrapper::SeyondRosWrapper(const rclcpp::NodeOptions & options)
 : rclcpp::Node("seyond_ros_wrapper", rclcpp::NodeOptions(options).use_intra_process_comms(true)),
   wrapper_status_(Status::NOT_INITIALIZED),
-  sensor_cfg_ptr_(nullptr),
+  sensor_cfg_ptr_(std::make_shared<SeyondSensorConfiguration>()),
+  mtx_config_(),
   packet_queue_(3000),
-  hw_interface_wrapper_(),
-  hw_monitor_wrapper_(),
-  decoder_wrapper_()
+  decoder_thread_(),  // this default constructor doesn't make a new thread
+  launch_hw_(false),
+  hw_interface_wrapper_(std::nullopt)
+#ifndef DEV_HW_IF
+  hw_monitor_wrapper_(std::nullopt),
+    decoder_wrapper_(std::nullopt)
+#endif
 {
   // ////////////////////////////////////////
   // Define, get and validate ROS parameters
@@ -34,24 +41,30 @@ SeyondRosWrapper::SeyondRosWrapper(const rclcpp::NodeOptions & options)
 
   if (launch_hw_) {
     hw_interface_wrapper_.emplace(this, sensor_cfg_ptr_);
+#ifndef DEV_HW_IF
     hw_monitor_wrapper_.emplace(this, hw_interface_wrapper_->HwInterface(), sensor_cfg_ptr_);
+#endif
   }
 
   // ////////////////////////////////////////
   // Get calibration data and launch decoder
   // ////////////////////////////////////////
 
+#ifndef DEV_HW_IF
   decoder_wrapper_.emplace(
     this, hw_interface_wrapper_ ? hw_interface_wrapper_->HwInterface() : nullptr, sensor_cfg_ptr_);
+#endif
 
   RCLCPP_DEBUG(get_logger(), "Starting stream");
 
+#ifndef DEV_HW_IF
   // The decoder is running in its own thread to not block UDP reception
   decoder_thread_ = std::thread([this]() {
     while (true) {
       decoder_wrapper_->ProcessCloudPacket(std::move(packet_queue_.pop()));
     }
   });
+#endif
 
   // ////////////////////////////////////////
   // Configure packet / scan message routing
@@ -184,12 +197,14 @@ Status SeyondRosWrapper::ValidateAndSetConfig(
   if (hw_interface_wrapper_) {
     hw_interface_wrapper_->OnConfigChange(new_config);
   }
+#ifndef DEV_HW_IF
   if (hw_monitor_wrapper_) {
     hw_monitor_wrapper_->OnConfigChange(new_config);
   }
   if (decoder_wrapper_) {
     decoder_wrapper_->OnConfigChange(new_config);
   }
+#endif
 
   sensor_cfg_ptr_ = new_config;
   return Status::OK;
@@ -246,6 +261,7 @@ rcl_interfaces::msg::SetParametersResult SeyondRosWrapper::OnParameterChange(
   // Update sub-wrapper parameters (if any)
   // ////////////////////////////////////////
 
+  #ifndef DEV_HW_IF
   // Currently, HW interface and monitor wrappers have only read-only parameters, so their update
   // logic is not implemented
   if (decoder_wrapper_) {
@@ -254,6 +270,7 @@ rcl_interfaces::msg::SetParametersResult SeyondRosWrapper::OnParameterChange(
       return result;
     }
   }
+#endif
 
   // ////////////////////////////////////////
   // Create new, updated sensor configuration
@@ -298,9 +315,15 @@ rcl_interfaces::msg::SetParametersResult SeyondRosWrapper::OnParameterChange(
 
 void SeyondRosWrapper::ReceiveCloudPacketCallback(std::vector<uint8_t> & packet)
 {
+  for (auto& c : packet) {
+    std::cerr << c << " ";
+  }
+  std::cerr << std::endl;
+#ifndef DEV_HW_IF
   if (!decoder_wrapper_ || decoder_wrapper_->Status() != Status::OK) {
     return;
   }
+#endif
 
   const auto now = std::chrono::high_resolution_clock::now();
   const auto timestamp_ns =

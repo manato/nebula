@@ -28,6 +28,8 @@ include_directories(
 
 ament_auto_add_library(nebula_hw_interfaces_seyond SHARED
         src/nebula_seyond_hw_interfaces/seyond_hw_interface.cpp
+        src/nebula_seyond_hw_interfaces/seyond_cmd_sender_base.cpp
+        src/nebula_seyond_hw_interfaces/seyond_cmd_sender_robin_w.cpp
         )
 
 ament_auto_add_library(nebula_hw_interfaces_hesai SHARED
