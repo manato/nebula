@@ -27,15 +27,26 @@ Status SeyondCmdSenderBase::InitSensor(const std::shared_ptr<const SeyondSensorC
 
   std::string udp_info = GetSensorParameter("udp_ports_ip");
   // Parse only necessary fields from the response
-  uint16_t data_port;
-  uint16_t status_port;
-  uint16_t message_port;
-  char destination_ip[20]{0};
-  if (std::sscanf(udp_info.c_str(), "%hu,%hu,%hu,%*32[^,],%*32[^,],%*s",
-                  &data_port, &status_port, &message_port, destination_ip) != 4) {
-    // if `udp_info` does not consist of the expected format, it might be HTTP connection error
+  auto parse_csv_line = [](const std::string& csv_text) -> std::vector<std::string>
+  {
+    char delimiter = ',';
+    std::vector<std::string> values;
+    std::stringstream ss(csv_text);
+    std::string w;
+    while (std::getline(ss, w, delimiter)) {values.emplace_back(w);}
+    return values;
+  };
+
+  std::vector<std::string> parse_result = parse_csv_line(udp_info);
+  if (parse_result.size() < 4) {
+    // udp_info should have contents like:
+    // 8010,8010,8010,0.0.0.0,0.0.0.0,172.168.1.170 (6 comma separated values )
     return Status::HTTP_CONNECTION_ERROR;
   }
+  uint16_t data_port = std::stoi(parse_result[0]);
+  uint16_t status_port = std::stoi(parse_result[1]);
+  uint16_t message_port = std::stoi(parse_result[2]);
+  std::string destination_ip{parse_result[3]};
 
   if (IsBroadcast(destination_ip)) {
     // broadcast IP, do nothing

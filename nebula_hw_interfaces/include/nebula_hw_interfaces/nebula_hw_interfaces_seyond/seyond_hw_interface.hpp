@@ -45,8 +45,8 @@ private:
     cloud_packet_callback_; /**This function pointer is called when the scan is complete*/
   std::unique_ptr<SeyondCmdSenderBase> command_sender_;
 
-  std::shared_ptr<boost::asio::io_context> ctx_;
-  std::unique_ptr<::drivers::tcp_driver::HttpClientDriver> drv_;
+  // std::shared_ptr<boost::asio::io_context> ctx_;
+  // std::unique_ptr<::drivers::tcp_driver::HttpClientDriver> drv_;
 
 
 

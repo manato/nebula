@@ -315,10 +315,11 @@ rcl_interfaces::msg::SetParametersResult SeyondRosWrapper::OnParameterChange(
 
 void SeyondRosWrapper::ReceiveCloudPacketCallback(std::vector<uint8_t> & packet)
 {
-  for (auto& c : packet) {
-    std::cerr << c << " ";
-  }
-  std::cerr << std::endl;
+  RCLCPP_INFO_STREAM(get_logger(), "********** packet");
+  // for (auto& c : packet) {
+  //   std::cerr << c << " ";
+  // }
+  // std::cerr << std::endl;
 #ifndef DEV_HW_IF
   if (!decoder_wrapper_ || decoder_wrapper_->Status() != Status::OK) {
     return;

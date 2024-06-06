@@ -12,9 +12,11 @@ SeyondHwInterface::SeyondHwInterface()
   cloud_udp_driver_{new ::drivers::udp_driver::UdpDriver(*cloud_io_context_)},
   sensor_configuration_(std::make_shared<const SeyondSensorConfiguration>()),
   cloud_packet_callback_(nullptr),
-  command_sender_(std::make_unique<SeyondCmdSenderBase>()),
+  command_sender_(std::make_unique<SeyondCmdSenderBase>())
+#if 0
   ctx_(std::make_shared<boost::asio::io_context>(1)),
   drv_(std::make_unique<::drivers::tcp_driver::HttpClientDriver>(ctx_))
+#endif
 {
 }
 
@@ -32,37 +34,44 @@ void SeyondHwInterface::ReceiveSensorPacketCallback(std::vector<uint8_t> & buffe
 
 Status SeyondHwInterface::SensorInterfaceStart()
 {
+  if (sensor_configuration_->sensor_model == SensorModel::SEYOND_FALCON_KINETIC) {
+    command_sender_ = std::make_unique<SeyondCmdSenderBase>();
+  } else if (sensor_configuration_->sensor_model == SensorModel::SEYOND_ROBIN_W) {
+    command_sender_ = std::make_unique<SeyondCmdSenderRobinW>();
+  } else {
+    return Status::INVALID_SENSOR_MODEL;
+  }
+  if (!command_sender_) {
+    return Status::ERROR_1;
+  }
+
+
+#if 0
+  // ====================================================================
+  // XXX: SIGSEGV happens here
+  // --------------------------------------------------------------------
+  drv_->init_client(sensor_configuration_->sensor_ip, 8010);
+
+  auto ret_str = drv_->get("/command/?get_udp_ports_ip");
+  drv_->client()->close();
+  PrintDebug("!)!)!)!)!)!)!)!)!)!)!)): " + ret_str);
+  // --------------------------------------------------------------------
+  // Expected output: ""!)!)!)!)!)!)!)!)!)!)!)): 8010,8010,8010,0.0.0.0,0.0.0.0,172.168.1.170"
+  // Actual: SIGSEGV
+  // ====================================================================
+#endif
+
+
+  Status status = command_sender_->InitSensor(sensor_configuration_);
+  if (status != Status::OK){
+    std::stringstream ss;
+    ss << "Failed to Init sensor: " << status;
+    PrintError(ss.str());
+    return status;
+  }
+  DisplayCommonVersion();
+
   try {
-    if (sensor_configuration_->sensor_model == SensorModel::SEYOND_FALCON_KINETIC) {
-      command_sender_ = std::make_unique<SeyondCmdSenderBase>();
-    } else if (sensor_configuration_->sensor_model == SensorModel::SEYOND_ROBIN_W) {
-       command_sender_ = std::make_unique<SeyondCmdSenderRobinW>();
-    } else {
-      return Status::INVALID_SENSOR_MODEL;
-    }
-    if (!command_sender_) {
-      return Status::ERROR_1;
-    }
-
-
-
-    // ====================================================================
-    // XXX: SIGSEGV happens here
-    // --------------------------------------------------------------------
-    drv_->init_client(sensor_configuration_->sensor_ip, 8010);
-
-    auto ret_str = drv_->get("/command/?get_udp_ports_ip");
-    drv_->client()->close();
-    PrintDebug("!)!)!)!)!)!)!)!)!)!)!)): " + ret_str);
-    // --------------------------------------------------------------------
-    // Expected output: ""!)!)!)!)!)!)!)!)!)!)!)): 8010,8010,8010,0.0.0.0,0.0.0.0,172.168.1.170"
-    // Actual: SIGSEGV
-    // ====================================================================
-
-
-    command_sender_->InitSensor(sensor_configuration_);
-    DisplayCommonVersion();
-
     std::cout << "Starting UDP server on: " << *sensor_configuration_ << std::endl;
     cloud_udp_driver_->init_receiver(
         sensor_configuration_->host_ip, sensor_configuration_->data_port);
